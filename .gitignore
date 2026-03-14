@@ -13,3 +13,9 @@ build/
 *.so
 .garmin-mcp/
 uv.lock
+
+# Local-only project files
+CLAUDE.md
+PLAN.md
+docs/initiatives/
+.claude/
