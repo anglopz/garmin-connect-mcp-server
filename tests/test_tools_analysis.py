@@ -77,9 +77,7 @@ async def test_find_similar_activities(mock_garmin):
     assert isinstance(result, list)
     ids = [str(a["activityId"]) for a in result]
     assert "100" not in ids  # ref excluded
-    assert all(
-        a["activityType"]["typeKey"] == "running" for a in result
-    )  # only same type
+    assert all(a["activityType"]["typeKey"] == "running" for a in result)  # only same type
     # Closest distance first: 200 (5100) then 400 (10000)
     assert result[0]["activityId"] == 200
 

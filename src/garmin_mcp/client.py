@@ -133,7 +133,11 @@ class GarminClient:
     async def get_resting_heart_rate(self, date: str) -> dict[str, Any]:
         """Resting heart rate for a date."""
         data = self._garmin.get_resting_heart_rate(date)
-        value = data.get("allMetrics", {}).get("metricsMap", {}).get("WELLNESS_RESTING_HEART_RATE", [{}])
+        value = (
+            data.get("allMetrics", {})
+            .get("metricsMap", {})
+            .get("WELLNESS_RESTING_HEART_RATE", [{}])
+        )
         rhr = value[0].get("value") if value else None
         return {
             "date": date,
@@ -199,8 +203,12 @@ class GarminClient:
         data = self._garmin.get_intensity_minutes_data(date)
         return {
             "date": date,
-            "moderate_intensity_minutes": data.get("weeklyIntensityMinutes", {}).get("moderateIntensityMinutes"),
-            "vigorous_intensity_minutes": data.get("weeklyIntensityMinutes", {}).get("vigorousIntensityMinutes"),
+            "moderate_intensity_minutes": data.get("weeklyIntensityMinutes", {}).get(
+                "moderateIntensityMinutes"
+            ),
+            "vigorous_intensity_minutes": data.get("weeklyIntensityMinutes", {}).get(
+                "vigorousIntensityMinutes"
+            ),
             "weekly_goal": data.get("weeklyGoal"),
             "intensity_minutes_goal": data.get("intensityMinutesGoal"),
         }
@@ -350,9 +358,7 @@ class GarminClient:
         data = self._garmin.get_weekly_stress(date)
         return {"date": date, "weekly_stress": data}
 
-    async def get_weekly_intensity_minutes(
-        self, start_date: str, end_date: str
-    ) -> dict[str, Any]:
+    async def get_weekly_intensity_minutes(self, start_date: str, end_date: str) -> dict[str, Any]:
         """Weekly intensity minutes."""
         data = self._garmin.get_weekly_intensity_minutes(start_date, end_date)
         return {"start_date": start_date, "end_date": end_date, "weekly_intensity": data}
@@ -364,14 +370,16 @@ class GarminClient:
         activities = []
         for aid in activity_ids:
             activity = self._garmin.get_activity(aid)
-            activities.append({
-                "id": aid,
-                "name": activity.get("activityName"),
-                "distance": activity.get("distance"),
-                "duration": activity.get("duration"),
-                "average_hr": activity.get("averageHR"),
-                "average_speed": activity.get("averageSpeed"),
-            })
+            activities.append(
+                {
+                    "id": aid,
+                    "name": activity.get("activityName"),
+                    "distance": activity.get("distance"),
+                    "duration": activity.get("duration"),
+                    "average_hr": activity.get("averageHR"),
+                    "average_speed": activity.get("averageSpeed"),
+                }
+            )
         return {"count": len(activities), "activities": activities}
 
     async def find_similar_activities(
@@ -383,16 +391,15 @@ class GarminClient:
         ref_distance = ref.get("distance") or 0
         candidates = self._garmin.get_activities(0, 50)
         same_type = [
-            a for a in candidates
+            a
+            for a in candidates
             if a.get("activityType", {}).get("typeKey") == ref_type
             and str(a.get("activityId")) != str(activity_id)
         ]
         same_type.sort(key=lambda a: abs((a.get("distance") or 0) - ref_distance))
         return same_type[:limit]
 
-    async def analyze_training_period(
-        self, start_date: str, end_date: str
-    ) -> dict[str, Any]:
+    async def analyze_training_period(self, start_date: str, end_date: str) -> dict[str, Any]:
         """Analyze training over a time period with insights."""
         activities = self._garmin.get_activities_by_date(start_date, end_date)
         count = len(activities)
@@ -414,9 +421,7 @@ class GarminClient:
 
     # --- Body methods (body/sleep agent) ---
 
-    async def get_body_composition(
-        self, start_date: str, end_date: str
-    ) -> dict[str, Any]:
+    async def get_body_composition(self, start_date: str, end_date: str) -> dict[str, Any]:
         """Weight, BMI, body fat %, muscle mass (date range)."""
         return self._garmin.get_body_composition(start_date, end_date)
 
@@ -527,6 +532,7 @@ class GarminClient:
     async def get_activity_gear(self, activity_id: str) -> dict[str, Any]:
         """Gear used for a specific activity."""
         return self._garmin.get_activity_gear(activity_id)
+
 
 async def get_client() -> GarminClient:
     """Get or create the singleton GarminClient instance.

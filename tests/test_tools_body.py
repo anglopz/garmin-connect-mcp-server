@@ -22,8 +22,20 @@ async def test_get_body_composition(mock_garmin):
 async def test_get_latest_weight_with_entries(mock_garmin):
     mock_garmin.get_body_composition.return_value = {
         "dateWeightList": [
-            {"calendarDate": "2026-03-10", "weight": 76.0, "bmi": 23.4, "bodyFat": 19.0, "muscleMass": 60.0},
-            {"calendarDate": "2026-03-14", "weight": 75.5, "bmi": 23.2, "bodyFat": 18.8, "muscleMass": 60.2},
+            {
+                "calendarDate": "2026-03-10",
+                "weight": 76.0,
+                "bmi": 23.4,
+                "bodyFat": 19.0,
+                "muscleMass": 60.0,
+            },
+            {
+                "calendarDate": "2026-03-14",
+                "weight": 75.5,
+                "bmi": 23.2,
+                "bodyFat": 18.8,
+                "muscleMass": 60.2,
+            },
         ]
     }
     client = GarminClient(mock_garmin)
@@ -71,9 +83,7 @@ async def test_get_weigh_ins(mock_garmin):
 @pytest.mark.asyncio
 async def test_get_blood_pressure(mock_garmin):
     mock_garmin.get_blood_pressure.return_value = {
-        "measurementSummaries": [
-            {"systolic": 118, "diastolic": 76, "calendarDate": "2026-03-14"}
-        ]
+        "measurementSummaries": [{"systolic": 118, "diastolic": 76, "calendarDate": "2026-03-14"}]
     }
     client = GarminClient(mock_garmin)
     result = await client.get_blood_pressure("2026-03-01", "2026-03-14")

@@ -74,11 +74,7 @@ async def test_get_heart_rate(mock_garmin):
 @pytest.mark.asyncio
 async def test_get_resting_heart_rate(mock_garmin):
     mock_garmin.get_resting_heart_rate.return_value = {
-        "allMetrics": {
-            "metricsMap": {
-                "WELLNESS_RESTING_HEART_RATE": [{"value": 52.0}]
-            }
-        }
+        "allMetrics": {"metricsMap": {"WELLNESS_RESTING_HEART_RATE": [{"value": 52.0}]}}
     }
     client = GarminClient(mock_garmin)
     result = await client.get_resting_heart_rate("2026-03-14")

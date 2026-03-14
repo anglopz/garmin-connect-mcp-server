@@ -9,9 +9,7 @@ from garmin_mcp.client import GarminClient
 
 @pytest.mark.asyncio
 async def test_get_activities(mock_garmin):
-    mock_garmin.get_activities.return_value = [
-        {"activityId": 123, "activityName": "Morning Run"}
-    ]
+    mock_garmin.get_activities.return_value = [{"activityId": 123, "activityName": "Morning Run"}]
     client = GarminClient(mock_garmin)
     result = await client.get_activities(0, 10)
     assert len(result) == 1
@@ -38,9 +36,7 @@ async def test_get_activities_by_date_no_type(mock_garmin):
     mock_garmin.get_activities_by_date.return_value = []
     client = GarminClient(mock_garmin)
     result = await client.get_activities_by_date("2026-03-01", "2026-03-14")
-    mock_garmin.get_activities_by_date.assert_called_once_with(
-        "2026-03-01", "2026-03-14", None
-    )
+    mock_garmin.get_activities_by_date.assert_called_once_with("2026-03-01", "2026-03-14", None)
     assert result == []
 
 

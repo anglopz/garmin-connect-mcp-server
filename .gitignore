@@ -17,5 +17,6 @@ uv.lock
 # Local-only project files
 CLAUDE.md
 PLAN.md
+agent_dev.md
 docs/initiatives/
 .claude/

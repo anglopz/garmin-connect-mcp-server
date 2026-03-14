@@ -11,7 +11,7 @@ from garmin_mcp.server import mcp
 
 @mcp.tool()
 async def get_daily_summary(date: str) -> dict:
-    """Get a full daily wellness summary including steps, calories, distance, HR, stress, and body battery.
+    """Get a full daily wellness summary including steps, calories, distance, and more.
 
     Use this when the user asks for an overview of their day, daily stats, or a health summary
     for a particular date.
@@ -155,7 +155,7 @@ async def get_intensity_minutes(date: str) -> dict:
     """Get moderate and vigorous intensity minutes for a specific date.
 
     Use this when the user asks about their intensity minutes, active minutes,
-    weekly activity goal progress, or how much time they spent exercising at moderate/vigorous levels.
+    weekly activity goal progress, or time spent exercising at moderate/vigorous levels.
 
     Args:
         date: Date in YYYY-MM-DD format
