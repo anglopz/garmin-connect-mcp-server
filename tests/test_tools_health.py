@@ -28,7 +28,7 @@ async def test_get_daily_summary(mock_garmin):
 
 @pytest.mark.asyncio
 async def test_get_steps(mock_garmin):
-    mock_garmin.get_steps_data.return_value = {
+    mock_garmin.get_user_summary.return_value = {
         "totalSteps": 10234,
         "dailyStepGoal": 10000,
     }
@@ -37,15 +37,14 @@ async def test_get_steps(mock_garmin):
     assert result["date"] == "2026-03-14"
     assert result["total_steps"] == 10234
     assert result["step_goal"] == 10000
-    mock_garmin.get_steps_data.assert_called_once_with("2026-03-14")
+    mock_garmin.get_user_summary.assert_called_with("2026-03-14")
 
 
 @pytest.mark.asyncio
 async def test_get_steps_chart(mock_garmin):
-    mock_garmin.get_steps_data.return_value = {
-        "totalSteps": 10234,
-        "stepList": [{"startGMT": "2026-03-14 08:00:00", "steps": 500}],
-    }
+    mock_garmin.get_steps_data.return_value = [
+        {"startGMT": "2026-03-14 08:00:00", "steps": 500},
+    ]
     client = GarminClient(mock_garmin)
     result = await client.get_steps_chart("2026-03-14")
     assert result["date"] == "2026-03-14"

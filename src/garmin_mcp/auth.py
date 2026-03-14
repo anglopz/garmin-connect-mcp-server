@@ -73,8 +73,15 @@ def authenticate() -> Garmin:
         )
 
     try:
-        garmin = Garmin(email, password)
-        garmin.login()
+        garmin = Garmin(email, password, return_on_mfa=True)
+        result = garmin.login()
+
+        if isinstance(result, tuple) and result[0] == "needs_mfa":
+            raise RuntimeError(
+                "MFA is required but cannot be handled in server mode (stdin is reserved "
+                "for MCP transport). Run 'uv run python scripts/setup_auth.py' first to "
+                "cache tokens, then restart the server."
+            )
 
         # Cache tokens
         token_dir.mkdir(parents=True, exist_ok=True)

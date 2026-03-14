@@ -103,12 +103,11 @@ class GarminClient:
 
     async def get_steps(self, date: str) -> dict[str, Any]:
         """Step count for a date."""
-        data = self._garmin.get_steps_data(date)
+        data = self._garmin.get_user_summary(date)
         return {
             "date": date,
             "total_steps": data.get("totalSteps"),
             "step_goal": data.get("dailyStepGoal"),
-            "daily_step_goal": data.get("dailyStepGoal"),
         }
 
     async def get_steps_chart(self, date: str) -> dict[str, Any]:
@@ -116,7 +115,7 @@ class GarminClient:
         data = self._garmin.get_steps_data(date)
         return {
             "date": date,
-            "time_series": data.get("stepList", []),
+            "time_series": data if isinstance(data, list) else [],
         }
 
     async def get_heart_rate(self, date: str) -> dict[str, Any]:
