@@ -528,7 +528,6 @@ class GarminClient:
         """Gear used for a specific activity."""
         return self._garmin.get_activity_gear(activity_id)
 
-
 async def get_client() -> GarminClient:
     """Get or create the singleton GarminClient instance.
 
