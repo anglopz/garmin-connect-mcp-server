@@ -51,12 +51,19 @@ def main() -> None:
         sys.exit(1)
 
     try:
-        garmin = Garmin(email, password)
-        garmin.login()
+        garmin = Garmin(email, password, return_on_mfa=True)
+        result = garmin.login()
+
+        if isinstance(result, tuple) and result[0] == "needs_mfa":
+            mfa_code = input("MFA code (check your email/authenticator): ").strip()
+            if not mfa_code:
+                print("Error: MFA code is required.", file=sys.stderr)
+                sys.exit(1)
+            garmin.resume_login(result[1], mfa_code)
 
         token_dir.mkdir(parents=True, exist_ok=True)
         garmin.garth.dump(str(token_dir))
-        print(f"Authenticated and cached tokens to {token_dir}")
+        print(f"\nAuthenticated and cached tokens to {token_dir}")
         print("You can now run the MCP server without providing credentials.")
     except Exception as e:
         print(f"Authentication failed: {e}", file=sys.stderr)

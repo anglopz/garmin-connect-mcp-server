@@ -9,12 +9,14 @@ from garmin_mcp.client import GarminClient
 async def test_get_running_dynamics(mock_garmin):
     mock_garmin.get_activity.return_value = {
         "activityId": 12345,
-        "averageRunningCadenceInStepsPerMinute": 170.0,
-        "maxRunningCadenceInStepsPerMinute": 185.0,
-        "avgGroundContactTime": 245.5,
-        "avgStrideLength": 1.12,
-        "avgVerticalOscillation": 8.3,
-        "avgGroundContactBalance": 49.8,
+        "summaryDTO": {
+            "averageRunCadence": 170.0,
+            "maxRunCadence": 185.0,
+            "groundContactTime": 245.5,
+            "strideLength": 1.12,
+            "verticalOscillation": 8.3,
+            "verticalRatio": 7.4,
+        },
     }
     client = GarminClient(mock_garmin)
     result = await client.get_running_dynamics("12345")
@@ -24,7 +26,7 @@ async def test_get_running_dynamics(mock_garmin):
     assert result["avg_ground_contact_time_ms"] == 245.5
     assert result["avg_stride_length_m"] == 1.12
     assert result["avg_vertical_oscillation_cm"] == 8.3
-    assert result["avg_ground_contact_balance"] == 49.8
+    assert result["avg_vertical_ratio"] == 7.4
     mock_garmin.get_activity.assert_called_once_with("12345")
 
 
@@ -32,10 +34,13 @@ async def test_get_running_dynamics(mock_garmin):
 async def test_get_training_effect(mock_garmin):
     mock_garmin.get_activity.return_value = {
         "activityId": 12345,
-        "aerobicTrainingEffect": 3.2,
-        "anaerobicTrainingEffect": 1.8,
-        "aerobicTrainingEffectMessage": "Improving",
-        "anaerobicTrainingEffectMessage": "Minor",
+        "summaryDTO": {
+            "trainingEffect": 3.2,
+            "anaerobicTrainingEffect": 1.8,
+            "aerobicTrainingEffectMessage": "Improving",
+            "anaerobicTrainingEffectMessage": "Minor",
+            "trainingEffectLabel": "HIGHLY_IMPROVING",
+        },
     }
     client = GarminClient(mock_garmin)
     result = await client.get_training_effect("12345")
@@ -44,6 +49,7 @@ async def test_get_training_effect(mock_garmin):
     assert result["anaerobic_training_effect"] == 1.8
     assert result["aerobic_effect_message"] == "Improving"
     assert result["anaerobic_effect_message"] == "Minor"
+    assert result["training_effect_label"] == "HIGHLY_IMPROVING"
     mock_garmin.get_activity.assert_called_once_with("12345")
 
 
@@ -73,10 +79,12 @@ async def test_get_activity_power_zones_non_list(mock_garmin):
 async def test_get_running_power(mock_garmin):
     mock_garmin.get_activity.return_value = {
         "activityId": 12345,
-        "avgPower": 245.0,
-        "maxPower": 380.0,
-        "normPower": 260.0,
-        "minPower": 120.0,
+        "summaryDTO": {
+            "averagePower": 245.0,
+            "maxPower": 380.0,
+            "normalizedPower": 260.0,
+            "minPower": 120.0,
+        },
     }
     client = GarminClient(mock_garmin)
     result = await client.get_running_power("12345")
@@ -137,10 +145,13 @@ async def test_get_activity_typed_splits_non_dict(mock_garmin):
 @pytest.mark.asyncio
 async def test_get_morning_readiness(mock_garmin):
     mock_garmin.get_morning_training_readiness.return_value = {
-        "morningReadinessScore": 68,
-        "morningReadinessLevel": "MODERATE",
+        "score": 68,
+        "level": "MODERATE",
         "sleepScore": 75,
-        "hrvStatus": "BALANCED",
+        "hrvFactorFeedback": "GOOD",
+        "hrvWeeklyAverage": 66,
+        "recoveryTime": 1,
+        "feedbackShort": "GOOD_SLEEP_HISTORY",
     }
     client = GarminClient(mock_garmin)
     result = await client.get_morning_readiness("2026-03-14")
@@ -148,5 +159,8 @@ async def test_get_morning_readiness(mock_garmin):
     assert result["score"] == 68
     assert result["level"] == "MODERATE"
     assert result["sleep_score"] == 75
-    assert result["hrv_status"] == "BALANCED"
+    assert result["hrv_factor_feedback"] == "GOOD"
+    assert result["hrv_weekly_average"] == 66
+    assert result["recovery_time"] == 1
+    assert result["feedback_short"] == "GOOD_SLEEP_HISTORY"
     mock_garmin.get_morning_training_readiness.assert_called_once_with("2026-03-14")

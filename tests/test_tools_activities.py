@@ -55,10 +55,10 @@ async def test_get_last_activity(mock_garmin):
 
 @pytest.mark.asyncio
 async def test_count_activities(mock_garmin):
-    mock_garmin.count_activities.return_value = {"total": 342}
+    mock_garmin.count_activities.return_value = 20
     client = GarminClient(mock_garmin)
     result = await client.count_activities()
-    assert result["total"] == 342
+    assert result["total_activities"] == 20
     mock_garmin.count_activities.assert_called_once()
 
 
@@ -67,7 +67,7 @@ async def test_get_activity(mock_garmin):
     mock_garmin.get_activity.return_value = {
         "activityId": 789,
         "activityName": "Trail Run",
-        "distance": 10500.0,
+        "summaryDTO": {"distance": 10500.0, "duration": 3600.0},
     }
     client = GarminClient(mock_garmin)
     result = await client.get_activity("789")
@@ -79,8 +79,9 @@ async def test_get_activity(mock_garmin):
 async def test_get_activity_details(mock_garmin):
     mock_garmin.get_activity_details.return_value = {
         "activityId": 789,
-        "heartRateData": [],
-        "elevationData": [],
+        "metricDescriptors": [],
+        "activityDetailMetrics": [],
+        "heartRateDTOs": [],
     }
     client = GarminClient(mock_garmin)
     result = await client.get_activity_details("789")
@@ -91,54 +92,73 @@ async def test_get_activity_details(mock_garmin):
 @pytest.mark.asyncio
 async def test_get_activity_splits(mock_garmin):
     mock_garmin.get_activity_splits.return_value = {
-        "lapDTOs": [{"distance": 1000, "duration": 360}]
+        "activityId": 789,
+        "lapDTOs": [{"distance": 1609.34, "duration": 659.562, "averageHR": 159.0}],
     }
     client = GarminClient(mock_garmin)
     result = await client.get_activity_splits("789")
     assert "lapDTOs" in result
+    assert result["lapDTOs"][0]["distance"] == 1609.34
     mock_garmin.get_activity_splits.assert_called_once_with("789")
 
 
 @pytest.mark.asyncio
 async def test_get_activity_weather(mock_garmin):
     mock_garmin.get_activity_weather.return_value = {
-        "temperature": 15,
-        "humidity": 60,
+        "temp": 15,
+        "relativeHumidity": 60,
         "windSpeed": 10,
+        "windDirection": 180,
     }
     client = GarminClient(mock_garmin)
     result = await client.get_activity_weather("789")
-    assert result["temperature"] == 15
+    assert result["temp"] == 15
+    assert result["relativeHumidity"] == 60
     mock_garmin.get_activity_weather.assert_called_once_with("789")
 
 
 @pytest.mark.asyncio
 async def test_get_activity_hr_zones(mock_garmin):
-    mock_garmin.get_activity_hr_in_timezones.return_value = {
-        "zones": [{"zone": 1, "seconds": 600}, {"zone": 2, "seconds": 1200}]
-    }
+    mock_garmin.get_activity_hr_in_timezones.return_value = [
+        {"zoneNumber": 1, "secsInZone": 89.007, "zoneLowBoundary": 98},
+        {"zoneNumber": 2, "secsInZone": 484.98, "zoneLowBoundary": 117},
+    ]
     client = GarminClient(mock_garmin)
     result = await client.get_activity_hr_zones("789")
-    assert "zones" in result
+    assert result["activity_id"] == "789"
+    assert len(result["hr_zones"]) == 2
+    assert result["hr_zones"][0]["zoneNumber"] == 1
+    assert result["hr_zones"][0]["secsInZone"] == 89.007
     mock_garmin.get_activity_hr_in_timezones.assert_called_once_with("789")
 
 
 @pytest.mark.asyncio
 async def test_get_activity_exercise_sets(mock_garmin):
     mock_garmin.get_activity_exercise_sets.return_value = {
-        "exerciseSets": [{"setType": "ACTIVE", "reps": 10, "weight": 60.0}]
+        "activityId": 789,
+        "exerciseSets": [
+            {
+                "exercises": [{"category": "BENCH_PRESS", "probability": 43.75}],
+                "duration": 77.285,
+                "repetitionCount": 8,
+                "weight": 40812.0,
+                "setType": "ACTIVE",
+            }
+        ],
     }
     client = GarminClient(mock_garmin)
     result = await client.get_activity_exercise_sets("789")
     assert "exerciseSets" in result
+    assert result["exerciseSets"][0]["repetitionCount"] == 8
+    assert result["exerciseSets"][0]["setType"] == "ACTIVE"
     mock_garmin.get_activity_exercise_sets.assert_called_once_with("789")
 
 
 @pytest.mark.asyncio
 async def test_get_activity_types(mock_garmin):
     mock_garmin.get_activity_types.return_value = [
-        {"typeId": 1, "typeKey": "running"},
-        {"typeId": 2, "typeKey": "cycling"},
+        {"typeId": 1, "typeKey": "running", "parentTypeId": 17},
+        {"typeId": 2, "typeKey": "cycling", "parentTypeId": 17},
     ]
     client = GarminClient(mock_garmin)
     result = await client.get_activity_types()
@@ -149,14 +169,23 @@ async def test_get_activity_types(mock_garmin):
 
 @pytest.mark.asyncio
 async def test_get_progress_summary(mock_garmin):
-    mock_garmin.get_progress_summary_between_dates.return_value = {
-        "totalDistance": 85000.0,
-        "totalDuration": 36000,
-        "activityCount": 12,
-    }
+    mock_garmin.get_progress_summary_between_dates.return_value = [
+        {
+            "date": "2026-03-14",
+            "countOfActivities": 1,
+            "stats": {
+                "running": {
+                    "distance": {"count": 3, "sum": 913690.99},
+                }
+            },
+        }
+    ]
     client = GarminClient(mock_garmin)
     result = await client.get_progress_summary("2026-03-01", "2026-03-14")
-    assert result["activityCount"] == 12
+    assert result["start_date"] == "2026-03-01"
+    assert result["end_date"] == "2026-03-14"
+    assert len(result["summaries"]) == 1
+    assert result["summaries"][0]["countOfActivities"] == 1
     mock_garmin.get_progress_summary_between_dates.assert_called_once_with(
         "2026-03-01", "2026-03-14"
     )

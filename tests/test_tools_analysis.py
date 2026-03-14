@@ -10,17 +10,21 @@ async def test_compare_activities(mock_garmin):
     mock_garmin.get_activity.side_effect = [
         {
             "activityName": "Morning Run",
-            "distance": 5000.0,
-            "duration": 1500,
-            "averageHR": 155,
-            "averageSpeed": 3.33,
+            "summaryDTO": {
+                "distance": 5000.0,
+                "duration": 1500,
+                "averageHR": 155,
+                "averageSpeed": 3.33,
+            },
         },
         {
             "activityName": "Evening Run",
-            "distance": 10000.0,
-            "duration": 3200,
-            "averageHR": 162,
-            "averageSpeed": 3.12,
+            "summaryDTO": {
+                "distance": 10000.0,
+                "duration": 3200,
+                "averageHR": 162,
+                "averageSpeed": 3.12,
+            },
         },
     ]
     client = GarminClient(mock_garmin)
@@ -43,12 +47,13 @@ async def test_compare_activities_empty(mock_garmin):
 
 @pytest.mark.asyncio
 async def test_find_similar_activities(mock_garmin):
+    # Detail endpoint uses activityTypeDTO and summaryDTO
     ref_activity = {
-        "activityId": 100,
-        "activityType": {"typeKey": "running"},
-        "distance": 5000.0,
+        "activityTypeDTO": {"typeKey": "running"},
+        "summaryDTO": {"distance": 5000.0},
     }
     mock_garmin.get_activity.return_value = ref_activity
+    # List endpoint uses flat activityType and distance
     mock_garmin.get_activities.return_value = [
         {
             "activityId": 200,
@@ -85,9 +90,8 @@ async def test_find_similar_activities(mock_garmin):
 @pytest.mark.asyncio
 async def test_find_similar_activities_limit(mock_garmin):
     ref_activity = {
-        "activityId": 1,
-        "activityType": {"typeKey": "running"},
-        "distance": 5000.0,
+        "activityTypeDTO": {"typeKey": "running"},
+        "summaryDTO": {"distance": 5000.0},
     }
     mock_garmin.get_activity.return_value = ref_activity
     mock_garmin.get_activities.return_value = [

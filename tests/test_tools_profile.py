@@ -75,11 +75,11 @@ async def test_get_gear_stats(garmin_client: GarminClient, mock_garmin):
 
 @pytest.mark.asyncio
 async def test_get_goals(garmin_client: GarminClient, mock_garmin):
-    mock_garmin.get_active_goals.return_value = [{"goalType": "STEPS", "goalValue": 10000}]
+    mock_garmin.get_goals.return_value = [{"goalType": "STEPS", "goalValue": 10000}]
     result = await garmin_client.get_goals()
     assert len(result) == 1
     assert result[0]["goalType"] == "STEPS"
-    mock_garmin.get_active_goals.assert_called_once()
+    mock_garmin.get_goals.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -110,10 +110,10 @@ async def test_get_workout(garmin_client: GarminClient, mock_garmin):
 
 @pytest.mark.asyncio
 async def test_get_activity_gear(garmin_client: GarminClient, mock_garmin):
-    mock_garmin.get_activity_gear.return_value = {
-        "gearUuid": "shoe-uuid",
-        "displayName": "Trail Shoes",
-    }
+    mock_garmin.get_activity_gear.return_value = [
+        {"gearUuid": "shoe-uuid", "displayName": "Trail Shoes"},
+    ]
     result = await garmin_client.get_activity_gear("123")
-    assert result["displayName"] == "Trail Shoes"
+    assert len(result) == 1
+    assert result[0]["displayName"] == "Trail Shoes"
     mock_garmin.get_activity_gear.assert_called_once_with("123")

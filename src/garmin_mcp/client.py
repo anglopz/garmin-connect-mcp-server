@@ -43,7 +43,8 @@ class GarminClient:
 
     async def count_activities(self) -> dict[str, Any]:
         """Get total number of activities."""
-        return self._garmin.count_activities()
+        count = self._garmin.count_activities()
+        return {"total_activities": count}
 
     async def get_activity(self, activity_id: str) -> dict[str, Any]:
         """Summary data for a specific activity."""
@@ -63,7 +64,11 @@ class GarminClient:
 
     async def get_activity_hr_zones(self, activity_id: str) -> dict[str, Any]:
         """Time in each heart rate zone."""
-        return self._garmin.get_activity_hr_in_timezones(activity_id)
+        data = self._garmin.get_activity_hr_in_timezones(activity_id)
+        return {
+            "activity_id": activity_id,
+            "hr_zones": data if isinstance(data, list) else [],
+        }
 
     async def get_activity_exercise_sets(self, activity_id: str) -> dict[str, Any]:
         """Strength training sets (reps, weight)."""
@@ -75,7 +80,12 @@ class GarminClient:
 
     async def get_progress_summary(self, start_date: str, end_date: str) -> dict[str, Any]:
         """Fitness stats over a date range by activity type."""
-        return self._garmin.get_progress_summary_between_dates(start_date, end_date)
+        data = self._garmin.get_progress_summary_between_dates(start_date, end_date)
+        return {
+            "start_date": start_date,
+            "end_date": end_date,
+            "summaries": data if isinstance(data, list) else [],
+        }
 
     # --- Health methods (health agent) ---
 
@@ -119,19 +129,20 @@ class GarminClient:
         }
 
     async def get_heart_rate(self, date: str) -> dict[str, Any]:
-        """Heart rate data (resting, max, zones, time series)."""
+        """Heart rate data (resting, min, max, time series)."""
         data = self._garmin.get_heart_rates(date)
         return {
             "date": date,
             "resting_heart_rate": data.get("restingHeartRate"),
+            "min_heart_rate": data.get("minHeartRate"),
             "max_heart_rate": data.get("maxHeartRate"),
-            "heart_rate_zones": data.get("heartRateZones", []),
+            "last_seven_days_avg_resting_heart_rate": data.get("lastSevenDaysAvgRestingHeartRate"),
             "time_series": data.get("heartRateValues", []),
         }
 
     async def get_resting_heart_rate(self, date: str) -> dict[str, Any]:
         """Resting heart rate for a date."""
-        data = self._garmin.get_resting_heart_rate(date)
+        data = self._garmin.get_rhr_day(date)
         value = (
             data.get("allMetrics", {})
             .get("metricsMap", {})
@@ -149,11 +160,13 @@ class GarminClient:
         data = self._garmin.get_all_day_stress(date)
         return {
             "date": date,
-            "overall_stress_level": data.get("overallStressLevel"),
+            "avg_stress_level": data.get("avgStressLevel"),
+            "max_stress_level": data.get("maxStressLevel"),
             "rest_stress_duration": data.get("restStressDuration"),
             "low_stress_duration": data.get("lowStressDuration"),
             "medium_stress_duration": data.get("mediumStressDuration"),
             "high_stress_duration": data.get("highStressDuration"),
+            "stress_qualifier": data.get("stressQualifier"),
             "stress_values": data.get("stressValuesArray", []),
         }
 
@@ -183,7 +196,7 @@ class GarminClient:
             "highest_respiration_value": data.get("highestRespirationValue"),
             "lowest_respiration_value": data.get("lowestRespirationValue"),
             "avg_sleep_respiration_value": data.get("avgSleepRespirationValue"),
-            "respiration_values": data.get("respirationValues", []),
+            "respiration_values": data.get("respirationValuesArray", []),
         }
 
     async def get_spo2(self, date: str) -> dict[str, Any]:
@@ -193,8 +206,9 @@ class GarminClient:
             "date": date,
             "avg_spo2": data.get("averageSpO2"),
             "lowest_spo2": data.get("lowestSpO2"),
-            "on_demand_reading_list": data.get("onDemandReadingList", []),
-            "continuous_reading_list": data.get("spO2HourlyAverages", []),
+            "latest_spo2": data.get("latestSpO2"),
+            "spo2_single_values": data.get("spO2SingleValues", []),
+            "continuous_reading_list": data.get("continuousReadingDTOList") or [],
         }
 
     async def get_intensity_minutes(self, date: str) -> dict[str, Any]:
@@ -202,14 +216,12 @@ class GarminClient:
         data = self._garmin.get_intensity_minutes_data(date)
         return {
             "date": date,
-            "moderate_intensity_minutes": data.get("weeklyIntensityMinutes", {}).get(
-                "moderateIntensityMinutes"
-            ),
-            "vigorous_intensity_minutes": data.get("weeklyIntensityMinutes", {}).get(
-                "vigorousIntensityMinutes"
-            ),
-            "weekly_goal": data.get("weeklyGoal"),
-            "intensity_minutes_goal": data.get("intensityMinutesGoal"),
+            "moderate_minutes": data.get("moderateMinutes"),
+            "vigorous_minutes": data.get("vigorousMinutes"),
+            "weekly_moderate": data.get("weeklyModerate"),
+            "weekly_vigorous": data.get("weeklyVigorous"),
+            "weekly_total": data.get("weeklyTotal"),
+            "week_goal": data.get("weekGoal"),
         }
 
     async def get_floors(self, date: str) -> dict[str, Any]:
@@ -217,8 +229,6 @@ class GarminClient:
         data = self._garmin.get_floors(date)
         return {
             "date": date,
-            "floors_ascended": data.get("floorsAscended"),
-            "floors_descended": data.get("floorsDescended"),
             "floor_values_array": data.get("floorValuesArray", []),
         }
 
@@ -229,7 +239,8 @@ class GarminClient:
             "date": date,
             "value_in_ml": data.get("valueInML"),
             "goal_in_ml": data.get("goalInML"),
-            "daily_average_in_ml": data.get("dailyAverageMl"),
+            "daily_average_in_ml": data.get("dailyAverageinML"),
+            "sweat_loss_in_ml": data.get("sweatLossInML"),
         }
 
     async def get_daily_events(self, date: str) -> dict[str, Any]:
@@ -245,68 +256,110 @@ class GarminClient:
     async def get_vo2max(self, date: str) -> dict[str, Any]:
         """VO2 Max estimate (running/cycling)."""
         data = self._garmin.get_max_metrics(date)
+        # API returns a list; extract first entry if present
+        entry = data[0] if isinstance(data, list) and data else {}
+        generic = entry.get("generic") or {}
+        cycling = entry.get("cycling") or {}
         return {
             "date": date,
-            "vo2max": data.get("vo2MaxPreciseValue"),
-            "fitness_age": data.get("fitnessAge"),
+            "vo2max_running": generic.get("vo2MaxPreciseValue"),
+            "vo2max_cycling": cycling.get("vo2MaxPreciseValue"),
+            "fitness_age": generic.get("fitnessAge"),
         }
 
     async def get_training_readiness(self, date: str) -> dict[str, Any]:
         """Training Readiness score."""
         data = self._garmin.get_training_readiness(date)
+        # API returns a list of readiness entries; take the most recent
+        entry = data[0] if isinstance(data, list) and data else {}
         return {
             "date": date,
-            "score": data.get("trainingReadinessScore"),
-            "level": data.get("trainingReadinessLabel"),
+            "score": entry.get("score"),
+            "level": entry.get("level"),
+            "sleep_score": entry.get("sleepScore"),
+            "recovery_time": entry.get("recoveryTime"),
+            "hrv_weekly_average": entry.get("hrvWeeklyAverage"),
+            "feedback": entry.get("feedbackShort"),
         }
 
     async def get_training_status(self, date: str) -> dict[str, Any]:
         """Training status and load."""
         data = self._garmin.get_training_status(date)
+        # Navigate nested structure to find primary device status
+        latest = data.get("mostRecentTrainingStatus", {}).get("latestTrainingStatusData", {})
+        # Find the primary device entry (or first available)
+        status_entry = {}
+        for device_data in latest.values():
+            if isinstance(device_data, dict):
+                if device_data.get("primaryTrainingDevice", False):
+                    status_entry = device_data
+                    break
+                if not status_entry:
+                    status_entry = device_data
+        acute = status_entry.get("acuteTrainingLoadDTO", {})
+        # VO2max from training status response
+        vo2max_data = data.get("mostRecentVO2Max", {})
+        generic_vo2 = vo2max_data.get("generic") or {}
         return {
             "date": date,
-            "status": data.get("trainingStatusPhaseType"),
-            "load": data.get("trainingLoad"),
+            "training_status": status_entry.get("trainingStatus"),
+            "training_status_feedback": status_entry.get("trainingStatusFeedbackPhrase"),
+            "fitness_trend": status_entry.get("fitnessTrend"),
+            "acute_load": acute.get("dailyTrainingLoadAcute"),
+            "chronic_load": acute.get("dailyTrainingLoadChronic"),
+            "acwr_ratio": acute.get("dailyAcuteChronicWorkloadRatio"),
+            "vo2max": generic_vo2.get("vo2MaxPreciseValue"),
         }
 
     async def get_hrv(self, date: str) -> dict[str, Any]:
         """Heart Rate Variability."""
         data = self._garmin.get_hrv_data(date)
+        summary = data.get("hrvSummary", {}) or {}
         return {
             "date": date,
-            "hrv_value": data.get("hrvValue"),
-            "status": data.get("status"),
-            "weekly_avg": data.get("weeklyAvg"),
+            "last_night_avg": summary.get("lastNightAvg"),
+            "last_night_5min_high": summary.get("lastNight5MinHigh"),
+            "status": summary.get("status"),
+            "weekly_avg": summary.get("weeklyAvg"),
+            "baseline": summary.get("baseline"),
+            "feedback": summary.get("feedbackPhrase"),
         }
 
     async def get_endurance_score(self, start_date: str, end_date: str) -> dict[str, Any]:
         """Endurance fitness score."""
         data = self._garmin.get_endurance_score(start_date, end_date)
+        score_dto = data.get("enduranceScoreDTO", {}) or {}
         return {
             "start_date": start_date,
             "end_date": end_date,
-            "score": data.get("overallScore"),
-            "trend": data.get("trend"),
+            "overall_score": score_dto.get("overallScore"),
+            "classification": score_dto.get("classification"),
+            "period_avg": data.get("avg"),
+            "period_max": data.get("max"),
         }
 
     async def get_hill_score(self, start_date: str, end_date: str) -> dict[str, Any]:
         """Climbing performance score."""
         data = self._garmin.get_hill_score(start_date, end_date)
+        scores = data.get("hillScoreDTOList", [])
+        latest = scores[0] if scores else {}
         return {
             "start_date": start_date,
             "end_date": end_date,
-            "score": data.get("hillScore"),
+            "overall_score": latest.get("overallScore"),
+            "strength_score": latest.get("strengthScore"),
+            "endurance_score": latest.get("enduranceScore"),
+            "max_score": data.get("maxScore"),
         }
 
     async def get_race_predictions(self) -> dict[str, Any]:
         """5K/10K/half/full marathon predictions."""
         data = self._garmin.get_race_predictions()
-        predictions = data.get("racePredictions", {})
         return {
-            "5k": predictions.get("5K"),
-            "10k": predictions.get("10K"),
-            "half_marathon": predictions.get("HALF_MARATHON"),
-            "marathon": predictions.get("MARATHON"),
+            "5k_seconds": data.get("time5K"),
+            "10k_seconds": data.get("time10K"),
+            "half_marathon_seconds": data.get("timeHalfMarathon"),
+            "marathon_seconds": data.get("timeMarathon"),
         }
 
     async def get_fitness_age(self, date: str) -> dict[str, Any]:
@@ -320,24 +373,28 @@ class GarminClient:
 
     async def get_personal_records(self) -> dict[str, Any]:
         """All personal records."""
-        data = self._garmin.get_personal_records()
+        data = self._garmin.get_personal_record()
         return {"records": data if isinstance(data, list) else []}
 
     async def get_lactate_threshold(self) -> dict[str, Any]:
         """Lactate threshold HR and pace."""
         data = self._garmin.get_lactate_threshold()
+        shr = data.get("speed_and_heart_rate", {}) or {}
+        power = data.get("power", {}) or {}
         return {
-            "heart_rate": data.get("ltHeartRate"),
-            "pace": data.get("ltPaceSeconds"),
-            "level": data.get("ltLevel"),
+            "heart_rate": shr.get("heartRate"),
+            "speed": shr.get("speed"),
+            "running_ftp": power.get("functionalThresholdPower"),
+            "sport": power.get("sport"),
         }
 
     async def get_cycling_ftp(self) -> dict[str, Any]:
         """Functional Threshold Power (cycling)."""
         data = self._garmin.get_cycling_ftp()
         return {
-            "ftp": data.get("ftpValue"),
-            "ftp_auto_detected": data.get("autoFtpValue"),
+            "ftp": data.get("functionalThresholdPower"),
+            "sport": data.get("sport"),
+            "is_stale": data.get("isStale"),
         }
 
     # --- Trends methods (training agent) ---
@@ -369,14 +426,16 @@ class GarminClient:
         activities = []
         for aid in activity_ids:
             activity = self._garmin.get_activity(aid)
+            # Detail endpoint nests metrics under summaryDTO
+            summary = activity.get("summaryDTO", {})
             activities.append(
                 {
                     "id": aid,
                     "name": activity.get("activityName"),
-                    "distance": activity.get("distance"),
-                    "duration": activity.get("duration"),
-                    "average_hr": activity.get("averageHR"),
-                    "average_speed": activity.get("averageSpeed"),
+                    "distance": summary.get("distance"),
+                    "duration": summary.get("duration"),
+                    "average_hr": summary.get("averageHR"),
+                    "average_speed": summary.get("averageSpeed"),
                 }
             )
         return {"count": len(activities), "activities": activities}
@@ -386,8 +445,10 @@ class GarminClient:
     ) -> list[dict[str, Any]]:
         """Find activities similar to a reference."""
         ref = self._garmin.get_activity(activity_id)
-        ref_type = ref.get("activityType", {}).get("typeKey")
-        ref_distance = ref.get("distance") or 0
+        # Detail endpoint uses activityTypeDTO, summaryDTO
+        ref_type = ref.get("activityTypeDTO", {}).get("typeKey")
+        ref_distance = ref.get("summaryDTO", {}).get("distance") or 0
+        # List endpoint uses flat activityType, distance
         candidates = self._garmin.get_activities(0, 50)
         same_type = [
             a
@@ -460,16 +521,17 @@ class GarminClient:
     async def get_sleep_data(self, date: str) -> dict[str, Any]:
         """Sleep stages, score, bed/wake times."""
         data = self._garmin.get_sleep_data(date)
+        dto = data.get("dailySleepDTO", {})
         return {
             "date": date,
-            "sleep_score": data.get("sleepScore"),
-            "sleep_start": data.get("sleepStartTimestamp"),
-            "sleep_end": data.get("sleepEndTimestamp"),
-            "duration_seconds": data.get("sleepTimeSeconds"),
-            "deep_sleep_seconds": data.get("deepSleepSeconds"),
-            "light_sleep_seconds": data.get("lightSleepSeconds"),
-            "rem_sleep_seconds": data.get("remSleepSeconds"),
-            "awake_seconds": data.get("awakeSleepSeconds"),
+            "sleep_score": dto.get("sleepScores", {}).get("overall", {}).get("value"),
+            "sleep_start": dto.get("sleepStartTimestampGMT"),
+            "sleep_end": dto.get("sleepEndTimestampGMT"),
+            "duration_seconds": dto.get("sleepTimeSeconds"),
+            "deep_sleep_seconds": dto.get("deepSleepSeconds"),
+            "light_sleep_seconds": dto.get("lightSleepSeconds"),
+            "rem_sleep_seconds": dto.get("remSleepSeconds"),
+            "awake_seconds": dto.get("awakeSleepSeconds"),
         }
 
     async def get_sleep_data_raw(self, date: str) -> dict[str, Any]:
@@ -514,7 +576,7 @@ class GarminClient:
 
     async def get_goals(self) -> list[dict[str, Any]]:
         """Active goals and progress."""
-        return self._garmin.get_active_goals()
+        return self._garmin.get_goals()
 
     async def get_earned_badges(self) -> list[dict[str, Any]]:
         """Earned badges and achievements."""
@@ -528,7 +590,7 @@ class GarminClient:
         """Specific workout by ID."""
         return self._garmin.get_workout_by_id(workout_id)
 
-    async def get_activity_gear(self, activity_id: str) -> dict[str, Any]:
+    async def get_activity_gear(self, activity_id: str) -> list[dict[str, Any]]:
         """Gear used for a specific activity."""
         return self._garmin.get_activity_gear(activity_id)
 
@@ -537,25 +599,28 @@ class GarminClient:
     async def get_running_dynamics(self, activity_id: str) -> dict[str, Any]:
         """Running dynamics metrics from an activity."""
         data = self._garmin.get_activity(activity_id)
+        summary = data.get("summaryDTO", {})
         return {
             "activity_id": activity_id,
-            "avg_cadence": data.get("averageRunningCadenceInStepsPerMinute"),
-            "max_cadence": data.get("maxRunningCadenceInStepsPerMinute"),
-            "avg_ground_contact_time_ms": data.get("avgGroundContactTime"),
-            "avg_stride_length_m": data.get("avgStrideLength"),
-            "avg_vertical_oscillation_cm": data.get("avgVerticalOscillation"),
-            "avg_ground_contact_balance": data.get("avgGroundContactBalance"),
+            "avg_cadence": summary.get("averageRunCadence"),
+            "max_cadence": summary.get("maxRunCadence"),
+            "avg_ground_contact_time_ms": summary.get("groundContactTime"),
+            "avg_stride_length_m": summary.get("strideLength"),
+            "avg_vertical_oscillation_cm": summary.get("verticalOscillation"),
+            "avg_vertical_ratio": summary.get("verticalRatio"),
         }
 
     async def get_training_effect(self, activity_id: str) -> dict[str, Any]:
         """Training effect breakdown for an activity."""
         data = self._garmin.get_activity(activity_id)
+        summary = data.get("summaryDTO", {})
         return {
             "activity_id": activity_id,
-            "aerobic_training_effect": data.get("aerobicTrainingEffect"),
-            "anaerobic_training_effect": data.get("anaerobicTrainingEffect"),
-            "aerobic_effect_message": data.get("aerobicTrainingEffectMessage"),
-            "anaerobic_effect_message": data.get("anaerobicTrainingEffectMessage"),
+            "aerobic_training_effect": summary.get("trainingEffect"),
+            "anaerobic_training_effect": summary.get("anaerobicTrainingEffect"),
+            "aerobic_effect_message": summary.get("aerobicTrainingEffectMessage"),
+            "anaerobic_effect_message": summary.get("anaerobicTrainingEffectMessage"),
+            "training_effect_label": summary.get("trainingEffectLabel"),
         }
 
     async def get_activity_power_zones(self, activity_id: str) -> dict[str, Any]:
@@ -569,12 +634,13 @@ class GarminClient:
     async def get_running_power(self, activity_id: str) -> dict[str, Any]:
         """Running power metrics from an activity."""
         data = self._garmin.get_activity(activity_id)
+        summary = data.get("summaryDTO", {})
         return {
             "activity_id": activity_id,
-            "avg_power_watts": data.get("avgPower"),
-            "max_power_watts": data.get("maxPower"),
-            "normalized_power_watts": data.get("normPower"),
-            "min_power_watts": data.get("minPower"),
+            "avg_power_watts": summary.get("averagePower"),
+            "max_power_watts": summary.get("maxPower"),
+            "normalized_power_watts": summary.get("normalizedPower"),
+            "min_power_watts": summary.get("minPower"),
         }
 
     async def get_climbpro_data(self, activity_id: str) -> dict[str, Any]:
@@ -598,10 +664,13 @@ class GarminClient:
         data = self._garmin.get_morning_training_readiness(date)
         return {
             "date": date,
-            "score": data.get("morningReadinessScore"),
-            "level": data.get("morningReadinessLevel"),
+            "score": data.get("score"),
+            "level": data.get("level"),
             "sleep_score": data.get("sleepScore"),
-            "hrv_status": data.get("hrvStatus"),
+            "hrv_factor_feedback": data.get("hrvFactorFeedback"),
+            "hrv_weekly_average": data.get("hrvWeeklyAverage"),
+            "recovery_time": data.get("recoveryTime"),
+            "feedback_short": data.get("feedbackShort"),
         }
 
 

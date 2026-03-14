@@ -181,7 +181,7 @@ async def get_workout(workout_id: str) -> dict:
 
 
 @mcp.tool()
-async def get_activity_gear(activity_id: str) -> dict:
+async def get_activity_gear(activity_id: str) -> list:
     """Get the gear used during a specific activity.
 
     Use this when the user asks which shoes or equipment they used for
