@@ -30,12 +30,14 @@ from garmin_mcp.prompts import (  # noqa: E402
 from garmin_mcp.resources import (  # noqa: E402
     athlete,  # noqa: F401
     daily,  # noqa: F401
+    device,  # noqa: F401
     readiness,  # noqa: F401
 )
 from garmin_mcp.tools import (  # noqa: E402
     activities,  # noqa: F401
     analysis,  # noqa: F401
     body,  # noqa: F401
+    fenix8,  # noqa: F401
     health,  # noqa: F401
     profile,  # noqa: F401
     sleep,  # noqa: F401

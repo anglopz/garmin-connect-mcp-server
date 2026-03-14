@@ -533,6 +533,78 @@ class GarminClient:
         """Gear used for a specific activity."""
         return self._garmin.get_activity_gear(activity_id)
 
+    # --- Fenix 8 AMOLED methods ---
+
+    async def get_running_dynamics(self, activity_id: str) -> dict[str, Any]:
+        """Running dynamics metrics from an activity."""
+        data = self._garmin.get_activity(activity_id)
+        return {
+            "activity_id": activity_id,
+            "avg_cadence": data.get("averageRunningCadenceInStepsPerMinute"),
+            "max_cadence": data.get("maxRunningCadenceInStepsPerMinute"),
+            "avg_ground_contact_time_ms": data.get("avgGroundContactTime"),
+            "avg_stride_length_m": data.get("avgStrideLength"),
+            "avg_vertical_oscillation_cm": data.get("avgVerticalOscillation"),
+            "avg_ground_contact_balance": data.get("avgGroundContactBalance"),
+        }
+
+    async def get_training_effect(self, activity_id: str) -> dict[str, Any]:
+        """Training effect breakdown for an activity."""
+        data = self._garmin.get_activity(activity_id)
+        return {
+            "activity_id": activity_id,
+            "aerobic_training_effect": data.get("aerobicTrainingEffect"),
+            "anaerobic_training_effect": data.get("anaerobicTrainingEffect"),
+            "aerobic_effect_message": data.get("aerobicTrainingEffectMessage"),
+            "anaerobic_effect_message": data.get("anaerobicTrainingEffectMessage"),
+        }
+
+    async def get_activity_power_zones(self, activity_id: str) -> dict[str, Any]:
+        """Power zone time distribution for an activity."""
+        data = self._garmin.get_activity_power_in_timezones(activity_id)
+        return {
+            "activity_id": activity_id,
+            "power_zones": data if isinstance(data, list) else [],
+        }
+
+    async def get_running_power(self, activity_id: str) -> dict[str, Any]:
+        """Running power metrics from an activity."""
+        data = self._garmin.get_activity(activity_id)
+        return {
+            "activity_id": activity_id,
+            "avg_power_watts": data.get("avgPower"),
+            "max_power_watts": data.get("maxPower"),
+            "normalized_power_watts": data.get("normPower"),
+            "min_power_watts": data.get("minPower"),
+        }
+
+    async def get_climbpro_data(self, activity_id: str) -> dict[str, Any]:
+        """ClimbPro split summaries for an activity."""
+        data = self._garmin.get_activity_split_summaries(activity_id)
+        return {
+            "activity_id": activity_id,
+            "split_summaries": data.get("splitSummaries", []) if isinstance(data, dict) else [],
+        }
+
+    async def get_activity_typed_splits(self, activity_id: str) -> dict[str, Any]:
+        """Typed split data for an activity."""
+        data = self._garmin.get_activity_typed_splits(activity_id)
+        return {
+            "activity_id": activity_id,
+            "typed_splits": data.get("typedSplits", []) if isinstance(data, dict) else [],
+        }
+
+    async def get_morning_readiness(self, date: str) -> dict[str, Any]:
+        """Morning training readiness assessment."""
+        data = self._garmin.get_morning_training_readiness(date)
+        return {
+            "date": date,
+            "score": data.get("morningReadinessScore"),
+            "level": data.get("morningReadinessLevel"),
+            "sleep_score": data.get("sleepScore"),
+            "hrv_status": data.get("hrvStatus"),
+        }
+
 
 async def get_client() -> GarminClient:
     """Get or create the singleton GarminClient instance.
