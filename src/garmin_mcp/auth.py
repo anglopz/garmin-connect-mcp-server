@@ -55,7 +55,7 @@ def authenticate() -> Garmin:
     if token_dir.exists():
         try:
             garmin = Garmin()
-            garmin.login(token_dir)
+            garmin.login(str(token_dir))
             logger.info("Authenticated using cached tokens from %s", token_dir)
             _garmin_instance = garmin
             return garmin

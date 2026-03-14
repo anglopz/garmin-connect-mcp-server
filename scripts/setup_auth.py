@@ -30,7 +30,7 @@ def main() -> None:
     if token_dir.exists():
         try:
             garmin = Garmin()
-            garmin.login(token_dir)
+            garmin.login(str(token_dir))
             print(f"Authenticated using cached tokens from {token_dir}")
             print("Token cache is valid -- no action needed.")
             return
