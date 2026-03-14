@@ -29,53 +29,53 @@ class GarminClient:
 
     async def get_activities(self, start: int = 0, limit: int = 10) -> list[dict[str, Any]]:
         """List recent activities with pagination."""
-        raise NotImplementedError
+        return self._garmin.get_activities(start, limit)
 
     async def get_activities_by_date(
         self, start_date: str, end_date: str, activity_type: str | None = None
     ) -> list[dict[str, Any]]:
         """Search activities within a date range."""
-        raise NotImplementedError
+        return self._garmin.get_activities_by_date(start_date, end_date, activity_type)
 
     async def get_last_activity(self) -> dict[str, Any]:
         """Get the most recent activity."""
-        raise NotImplementedError
+        return self._garmin.get_last_activity()
 
     async def count_activities(self) -> dict[str, Any]:
         """Get total number of activities."""
-        raise NotImplementedError
+        return self._garmin.count_activities()
 
     async def get_activity(self, activity_id: str) -> dict[str, Any]:
         """Summary data for a specific activity."""
-        raise NotImplementedError
+        return self._garmin.get_activity(activity_id)
 
     async def get_activity_details(self, activity_id: str) -> dict[str, Any]:
         """Detailed metrics: HR, pace, elevation time series."""
-        raise NotImplementedError
+        return self._garmin.get_activity_details(activity_id)
 
     async def get_activity_splits(self, activity_id: str) -> dict[str, Any]:
         """Per-km or per-mile split data."""
-        raise NotImplementedError
+        return self._garmin.get_activity_splits(activity_id)
 
     async def get_activity_weather(self, activity_id: str) -> dict[str, Any]:
         """Weather conditions during activity."""
-        raise NotImplementedError
+        return self._garmin.get_activity_weather(activity_id)
 
     async def get_activity_hr_zones(self, activity_id: str) -> dict[str, Any]:
         """Time in each heart rate zone."""
-        raise NotImplementedError
+        return self._garmin.get_activity_hr_in_timezones(activity_id)
 
     async def get_activity_exercise_sets(self, activity_id: str) -> dict[str, Any]:
         """Strength training sets (reps, weight)."""
-        raise NotImplementedError
+        return self._garmin.get_activity_exercise_sets(activity_id)
 
     async def get_activity_types(self) -> list[dict[str, Any]]:
         """All available activity types."""
-        raise NotImplementedError
+        return self._garmin.get_activity_types()
 
     async def get_progress_summary(self, start_date: str, end_date: str) -> dict[str, Any]:
         """Fitness stats over a date range by activity type."""
-        raise NotImplementedError
+        return self._garmin.get_progress_summary_between_dates(start_date, end_date)
 
     # --- Health methods (health agent) ---
 
@@ -257,56 +257,57 @@ class GarminClient:
 
     async def get_user_profile(self) -> dict[str, Any]:
         """User social profile and preferences."""
-        raise NotImplementedError
+        return self._garmin.get_user_profile()
 
     async def get_user_settings(self) -> dict[str, Any]:
         """User settings, measurement system, sleep schedule."""
-        raise NotImplementedError
+        return self._garmin.get_userprofile_settings()
 
     async def get_devices(self) -> list[dict[str, Any]]:
         """Registered Garmin devices."""
-        raise NotImplementedError
+        return self._garmin.get_devices()
 
     async def get_device_settings(self, device_id: str) -> dict[str, Any]:
         """Settings for a specific device."""
-        raise NotImplementedError
+        return self._garmin.get_device_settings(device_id)
 
     async def get_device_last_used(self) -> dict[str, Any]:
         """Last used device info."""
-        raise NotImplementedError
+        return self._garmin.get_device_last_used()
 
     async def get_primary_training_device(self) -> dict[str, Any]:
         """Primary training device."""
-        raise NotImplementedError
+        return self._garmin.get_primary_training_device()
 
     async def get_gear(self) -> list[dict[str, Any]]:
         """All tracked gear/equipment."""
-        raise NotImplementedError
+        last_used = self._garmin.get_device_last_used()
+        profile_number = last_used["userProfileNumber"]
+        return self._garmin.get_gear(profile_number)
 
     async def get_gear_stats(self, gear_uuid: str) -> dict[str, Any]:
         """Usage stats for a gear item."""
-        raise NotImplementedError
+        return self._garmin.get_gear_stats(gear_uuid)
 
     async def get_goals(self) -> list[dict[str, Any]]:
         """Active goals and progress."""
-        raise NotImplementedError
+        return self._garmin.get_active_goals()
 
     async def get_earned_badges(self) -> list[dict[str, Any]]:
         """Earned badges and achievements."""
-        raise NotImplementedError
+        return self._garmin.get_earned_badges()
 
     async def get_workouts(self) -> list[dict[str, Any]]:
         """Saved workouts."""
-        raise NotImplementedError
+        return self._garmin.get_workouts()
 
     async def get_workout(self, workout_id: str) -> dict[str, Any]:
         """Specific workout by ID."""
-        raise NotImplementedError
+        return self._garmin.get_workout_by_id(workout_id)
 
     async def get_activity_gear(self, activity_id: str) -> dict[str, Any]:
         """Gear used for a specific activity."""
-        raise NotImplementedError
-
+        return self._garmin.get_activity_gear(activity_id)
 
 async def get_client() -> GarminClient:
     """Get or create the singleton GarminClient instance.
